@@ -1,169 +1,139 @@
-# IC_simulacao-algoritmos-quanticos
 
-## Soma de vetores em CUDA
-...
+# IC\_simulacao-algoritmos-quanticos
 
-## Multiplicação genérica de matriz por vetor em CUDA
-...
+Este repositório contém implementações em CUDA e Python para a simulação de operações fundamentais em algoritmos quânticos. O projeto foca em otimizar computações como multiplicação de vetores e matrizes complexas, além de demonstrar a aplicação do **produto de Kronecker**, essencial em simulações de sistemas quânticos compostos.
 
-## Produto kronecker de duas matrizes complexas em CUDA
-...
+## Conteúdo do Repositório
 
-## Ponte de Integração Python-CUDA 
-Este parte do repositório se refere a um projeto que demonstra a integração entre um script Python e um executável CUDA para realizar operações de computação quântica (multiplicação de matriz-vetor) de forma acelerada por GPU.
+### Soma de Vetores em CUDA
 
-O script ponte.py atua como uma "ponte", recebendo uma descrição de circuito quântico em formato JSON (antigo Qobj), construindo um QuantumCircuit no Qiskit, gerando a matriz unitária e o vetor de estado correspondentes, salvando-os em arquivos binários, executando um programa CUDA (cuda_exec) para realizar a computação e, finalmente, lendo o resultado e enviando-o de volta via HTTP POST.
+Implementação da soma de dois vetores complexos utilizando programação paralela com CUDA.
 
-Pré-requisitos
-Antes de começar, certifique-se de ter o seguinte instalado:
+### Multiplicação Genérica de Matriz por Vetor em CUDA
 
-Python 3.8+
+Código CUDA para multiplicar matrizes (incluindo complexas) por vetores, com suporte a formatos binários de entrada e saída.
 
-Pip (gerenciador de pacotes do Python)
+### Produto de Kronecker em CUDA
 
-CUDA Toolkit (incluindo nvcc)
+Implementação do produto de Kronecker entre matrizes complexas — operação fundamental para simular sistemas de múltiplos qubits.
 
-Git (opcional, para clonar o repositório)
+### Integração Python ↔ CUDA
 
-Estrutura do Projeto
+Sistema de ponte entre Python e CUDA para simular circuitos quânticos. A integração é feita por meio da biblioteca **Qiskit**, que gera a matriz unitária e o vetor de estado a partir de um circuito quântico, salva os dados em arquivos binários e os envia para um executável CUDA para simulação acelerada por GPU.
+
+---
+
+## Estrutura do Projeto
+
+```
 .
-├── qiskit_env/             # Ambiente virtual Python (será criado)
-├── ponte.py               # Script Python (a "ponte")
+├── qiskit_env/             # Ambiente virtual Python (criado localmente)
+├── ponte.py               # Script Python que orquestra a integração
 ├── cuda_exec.cu           # Código-fonte CUDA
-├── matrix.bin             # Arquivo de saída da matriz (gerado pelo Python)
-├── vector.bin             # Arquivo de saída do vetor (gerado pelo Python)
-└── result.bin             # Arquivo de saída do resultado CUDA (gerado pelo CUDA)
+├── matrix.bin             # Matriz unitária (gerado pelo Python)
+├── vector.bin             # Vetor de estado inicial (gerado pelo Python)
+└── result.bin             # Resultado final (gerado pelo CUDA)
+```
 
-Configuração e Execução
-Siga os passos abaixo para configurar e executar o projeto:
+---
 
-1. Configurar o Ambiente Virtual Python
-É altamente recomendável usar um ambiente virtual para isolar as dependências do projeto.
+##  Requisitos
 
-Navegue até o diretório raiz do projeto no seu terminal:
+* Python 3.8+
+* CUDA Toolkit (com suporte ao `nvcc`)
+* Qiskit
+* Numpy
+* Flask
+* Git (opcional)
 
-cd /caminho/para/sua/pasta/do/projeto
+---
 
-Crie um novo ambiente virtual:
+## Instruções de Uso
 
+### 1. Criar Ambiente Virtual
+
+```bash
 python -m venv qiskit_env
+source qiskit_env/bin/activate   # Linux/macOS
+# .\qiskit_env\Scripts\activate  # Windows
+```
 
-Ative o ambiente virtual:
+Instale as dependências:
 
-No Windows:
+```bash
+pip install numpy flask requests qiskit
+```
 
-.\qiskit_env\Scripts\activate
+---
 
-No macOS/Linux:
+### 2. Compilar o Executável CUDA
 
-source qiskit_env/bin/activate
+```bash
+nvcc cuda_exec.cu -o cuda_exec   # Linux/macOS
+# nvcc cuda_exec.cu -o cuda_exec.exe  # Windows
+```
 
-Você verá (qiskit_env) no início da sua linha de comando, indicando que o ambiente está ativo.
+---
 
-Instale as dependências Python dentro do ambiente ativado:
+### 3. Rodar o Servidor Flask
 
-pip install numpy requests qiskit
+Crie um arquivo `server.py` com o seguinte conteúdo:
 
-2. Compilar o Código CUDA
-O código-fonte CUDA (cuda_exec.cu) precisa ser compilado para se tornar um executável.
+<details>
+<summary> Clique aqui para expandir</summary>
 
-Certifique-se de que o ambiente virtual está ativo (o (qiskit_env) deve aparecer no seu terminal).
-
-Navegue até o diretório onde cuda_exec.cu está localizado (geralmente o mesmo diretório de ponte.py).
-
-Compile o arquivo .cu usando nvcc:
-
-No Windows:
-
-nvcc cuda_exec.cu -o cuda_exec.exe
-
-No macOS/Linux:
-
-nvcc cuda_exec.cu -o cuda_exec
-
-Se a compilação for bem-sucedida, um arquivo executável chamado cuda_exec (ou cuda_exec.exe no Windows) será criado no mesmo diretório.
-
-(Apenas macOS/Linux) Conceda permissões de execução:
-
-chmod +x cuda_exec
-
-3. Executar o Servidor Flask (Necessário)
-O script ponte.py faz uma requisição GET para http://127.0.0.1:5000/readqobj para obter o JSON do circuito e uma requisição POST para http://127.0.0.1:5000/ para enviar o resultado. Você precisa ter um servidor Flask (ou similar) rodando nessas rotas.
-
-Exemplo básico de um server.py para testes:
-
-# server.py
+```python
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Rota GET para simular a leitura do Qobj
 @app.route('/readqobj', methods=['GET'])
 def read_qobj_mock():
-    # Este é um Qobj de exemplo. Na realidade, você leria de um arquivo ou geraria dinamicamente.
     qobj_data = {
         "experiments": [
             {
-                "clbit_labels": [],
-                "creg_sizes": [],
                 "instructions": [
                     {"name": "h", "qubits": [0]},
                     {"name": "cx", "qubits": [0, 1]}
                 ],
-                "memory_slots": 0,
-                "n_qubits": 2,
-                "name": "default_experiment",
-                "qreg_sizes": [],
-                "qubit_labels": [0, 1]
+                "n_qubits": 2
             }
-        ],
-        "header": {"backend_name": "unknown", "backend_version": "unknown"},
-        "qobj_data": {
-            "backend_name": "unknown", "backend_version": "unknown",
-            "init_qubits": None, "meas_level": "none", "memory": False,
-            "memory_slots": 0, "n_qubits": 2, "parameter_binds": None,
-            "parametric_pulses": None, "shots": 1024
-        }
+        ]
     }
     return jsonify(qobj_data)
 
-# Rota POST para receber os resultados
 @app.route('/', methods=['POST'])
 def receive_result():
-    if request.is_json:
-        data = request.get_json()
-        print("\n--- Resultado Recebido via POST ---")
-        print("Dados recebidos (formato complexo serializado):", data)
-        # Opcional: Converter de volta para números complexos se necessário
-        # complex_results = [complex(item['real'], item['imag']) for item in data]
-        # print("Resultados convertidos para complexo:", complex_results)
-        print("-----------------------------------")
-        return jsonify({"status": "success", "message": "Resultado recebido com sucesso!"}), 200
-    else:
-        return jsonify({"status": "error", "message": "Requisição deve ser JSON"}), 400
+    data = request.get_json()
+    print("Resultado recebido:", data)
+    return jsonify({"status": "ok"})
 
 if __name__ == '__main__':
-    print("Iniciando servidor Flask em http://127.0.0.1:5000/")
     app.run(debug=True, port=5000)
+```
 
+</details>
 
-Salve o código acima como server.py no mesmo diretório de ponte.py.
+Execute o servidor:
 
-Instale Flask no seu ambiente virtual (se ainda não tiver):
-
-pip install Flask
-
-Inicie o servidor Flask em um terminal separado (mantenha-o rodando):
-
+```bash
 python server.py
+```
 
-4. Executar o Script Python (ponte.py)
-Com o ambiente ativado e o executável CUDA compilado (e o servidor Flask rodando), você pode executar o script Python.
+---
 
-Certifique-se de que o ambiente virtual está ativo no terminal onde você irá executar ponte.py.
+### 4. Executar o Script Principal
 
-Execute o script:
+Com o servidor rodando e o ambiente virtual ativado:
 
+```bash
 python ponte.py
+```
 
-Você verá a saída do ponte.py no seu terminal, incluindo o circuito, a confirmação de que os arquivos binários foram salvos, a execução do CUDA e o resultado lido. No terminal onde o server.py está rodando, você deverá ver a mensagem indicando que o resultado foi recebido via POST.
+---
+
+## Sobre a Aplicação
+
+Este projeto surgiu no contexto de uma Iniciação Científica (IC) voltada para **simulação de algoritmos quânticos em GPU**. A integração CUDA + Python permite acelerar o processo de multiplicação de matrizes complexas e aplicação de circuitos quânticos simulados localmente, com objetivo de estudar alternativas ao backend padrão do Qiskit.
+
+
